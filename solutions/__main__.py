@@ -1,10 +1,13 @@
 import sys
 from typing import Any, Callable
 
-from . import day01
+from . import day01, day02
 from .parsing import ArgsModel, build_parser
 
-solutions: dict[int, list[Callable[[list[str]], Any]]] = {1: [day01.alpha]}
+solutions: dict[int, list[Callable[[list[str]], Any]]] = {
+    1: [day01.alpha],
+    2: [day02.alpha],
+}
 
 
 def main() -> None:
