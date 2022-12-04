@@ -15,7 +15,7 @@ def main() -> None:
         raise UnsolvedError(args.day_number, args.version)
     solver = day_solvers[args.version]
     with open(args.input_filepath) as f:
-        input_strs = f.readlines()
+        input_strs = [line.replace("\n", "") for line in f.readlines()]
     print(solver(input_strs))
 
 
