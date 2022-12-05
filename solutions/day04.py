@@ -1,7 +1,7 @@
 import re
 
 
-def alpha(inputs: list[str]) -> tuple[int, int]:
+def alpha(inputs: list[str], debug: bool = False) -> tuple[int, int]:
     pairs = list(map(SectionPair.from_input_row, inputs))
     part1 = sum(pair.fully_overlaps() for pair in pairs)
     part2 = sum(pair.overlaps_at_all() for pair in pairs)

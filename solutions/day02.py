@@ -41,7 +41,7 @@ class NeededOutcome(Enum):
 OUTCOME_TO_MOD: dict[Outcome, int] = {Outcome.WIN: 1, Outcome.DRAW: 0, Outcome.LOSE: 2}
 
 
-def alpha(inputs: list[str]) -> tuple[int, int]:
+def alpha(inputs: list[str], debug: bool = False) -> tuple[int, int]:
     part1 = sum(round_score_part1(*line.split(" ")) for line in inputs)
     part2 = sum(round_score_part2(*line.split(" ")) for line in inputs)
     return part1, part2

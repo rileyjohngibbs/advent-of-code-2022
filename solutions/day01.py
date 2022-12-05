@@ -1,4 +1,4 @@
-def alpha(inputs: list[str]) -> tuple[int, int]:
+def alpha(inputs: list[str], debug: bool = False) -> tuple[int, int]:
     elves: list[int] = []
     elf = 0
     for line in inputs:

@@ -40,7 +40,10 @@ def build_parser(model: type[M_]) -> Parser[M_]:
                     argnames = (f"--{flags[0]}",)
         else:
             argnames = (field_name,)
-        arg_parser.add_argument(*argnames, type=field.type_, default=field.default)
+        if field.type_ is bool:
+            arg_parser.add_argument(f"--{field_name}", action="store_true")
+        else:
+            arg_parser.add_argument(*argnames, type=field.type_, default=field.default)
 
     parser = Parser(model=model, arg_parser=arg_parser)
 

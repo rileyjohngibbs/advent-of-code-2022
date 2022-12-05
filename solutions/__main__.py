@@ -1,14 +1,15 @@
 import sys
 from typing import Any, Callable
 
-from solutions import day01, day02, day03, day04
+from solutions import day01, day02, day03, day04, day05
 from solutions.parsing import ArgsModel, build_parser
 
-solution_functions: dict[int, list[Callable[[list[str]], Any]]] = {
+solution_functions: dict[int, list[Callable[[list[str], bool], Any]]] = {
     1: [day01.alpha],
     2: [day02.alpha],
     3: [day03.alpha],
     4: [day04.alpha],
+    5: [day05.alpha],
 }
 
 
@@ -21,17 +22,19 @@ def main() -> None:
     solver = day_solvers[args.version]
     with open(args.input_filepath) as f:
         input_strs = [line.replace("\n", "") for line in f.readlines()]
-    print(solver(input_strs))
+    print(solver(input_strs, args.debug))
 
 
 class MainArgs(ArgsModel):
     day_number: int
     input_filepath: str
     version: int = 0
+    debug: bool
 
     class Meta:
         flags: dict[str, tuple[str, str] | tuple[str] | str] = {
-            "version": ("v", "version")
+            "version": ("v", "version"),
+            "debug": ("debug"),
         }
 
 

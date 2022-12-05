@@ -1,7 +1,7 @@
 from typing import Iterable
 
 
-def alpha(inputs: list[str]) -> tuple[int, int]:
+def alpha(inputs: list[str], debug: bool = False) -> tuple[int, int]:
     part1 = sum(
         Rucksack.priority(r.common_item()) for r in map(Rucksack.from_input_row, inputs)
     )
