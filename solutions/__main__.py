@@ -1,5 +1,7 @@
 import sys
-from typing import Any, Callable
+import time
+from contextlib import contextmanager
+from typing import Any, Callable, Iterator
 
 from solutions import day01, day02, day03, day04, day05, day06
 from solutions.parsing import ArgsModel, build_parser
@@ -23,7 +25,8 @@ def main() -> None:
     solver = day_solvers[args.version]
     with open(args.input_filepath) as f:
         input_strs = [line.replace("\n", "") for line in f.readlines()]
-    print(solver(input_strs, args.debug))
+    with timeit(args.timeit):
+        print(solver(input_strs, args.debug))
 
 
 class MainArgs(ArgsModel):
@@ -31,11 +34,11 @@ class MainArgs(ArgsModel):
     input_filepath: str
     version: int = 0
     debug: bool
+    timeit: bool
 
     class Meta:
         flags: dict[str, tuple[str, str] | tuple[str] | str] = {
             "version": ("v", "version"),
-            "debug": ("debug"),
         }
 
 
@@ -43,6 +46,15 @@ class UnsolvedError(NotImplementedError):
     def __init__(self, day_number: int, version: int) -> None:
         msg = f"No solution of day {day_number} and version {version}."
         super().__init__(msg)
+
+
+@contextmanager
+def timeit(print_time: bool) -> Iterator[None]:
+    start = time.time()
+    yield
+    end = time.time()
+    if print_time:
+        print(end - start)
 
 
 if __name__ == "__main__":
