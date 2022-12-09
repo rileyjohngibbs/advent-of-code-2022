@@ -15,7 +15,7 @@ solution_functions: dict[int, list[Callable[[list[str], bool], Any]]] = {
     6: [day06.alpha, day06.beta],
     7: [day07.alpha],
     8: [day08.alpha, day08.beta],
-    9: [day09.alpha],
+    9: [day09.alpha, day09.beta],
 }
 
 
