@@ -1,5 +1,5 @@
 from argparse import ArgumentParser
-from typing import Callable, Generic, Iterable, TypeVar
+from typing import Generic, Iterable, TypeVar
 
 from pydantic import BaseModel
 
