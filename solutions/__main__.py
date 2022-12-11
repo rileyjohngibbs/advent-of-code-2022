@@ -3,7 +3,7 @@ import time
 from contextlib import contextmanager
 from typing import Any, Callable, Iterator
 
-from solutions import day01, day02, day03, day04, day05, day06, day07, day08, day09, day10
+from solutions import day01, day02, day03, day04, day05, day06, day07, day08, day09, day10, day11
 from solutions.parsing import ArgsModel, build_parser
 
 solution_functions: dict[int, list[Callable[[list[str], bool], Any]]] = {
@@ -17,6 +17,7 @@ solution_functions: dict[int, list[Callable[[list[str], bool], Any]]] = {
     8: [day08.alpha, day08.beta],
     9: [day09.alpha, day09.beta],
     10: [day10.alpha],
+    11: [day11.alpha],
 }
 
 
