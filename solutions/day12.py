@@ -29,14 +29,14 @@ def pathfind(
     visited: set[tuple[int, int]] = set()
     frontier = start
     steps = 0
-    while end not in visited:
+    while end not in frontier:
         new_frontier: set[tuple[int, int]] = set()
         for y, x in frontier:
             new_frontier.update(valid_neighbors(grid, y, x).difference(visited))
             visited.add((y, x))
         steps += 1
         frontier = new_frontier
-    return steps - 1
+    return steps
 
 
 def valid_neighbors(grid: list[list[int]], y: int, x: int) -> set[tuple[int, int]]:
