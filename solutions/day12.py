@@ -9,15 +9,13 @@ def alpha(inputs: list[str], debug: bool) -> tuple[int, int]:
                 case "S":
                     grid[i][j] = ord("a")
                     single_start = {(i, j)}
-                    multiple_start.add((i, j))
                 case "E":
                     grid[i][j] = ord("z")
                     end = (i, j)
-                case "a":
-                    grid[i][j] = ord(item)
-                    multiple_start.add((i, j))
                 case _:
                     grid[i][j] = ord(item)
+            if grid[i][j] == ord("a"):
+                multiple_start.add((i, j))
     part1 = pathfind(grid, single_start, end)
     part2 = pathfind(grid, multiple_start, end)
     return part1, part2
