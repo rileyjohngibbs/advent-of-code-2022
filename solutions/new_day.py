@@ -7,8 +7,15 @@ def main(*args: str):
     if len(args) != 2 or not args[1].isdigit():
         print("Provide a day number pl0x, preferably two digits")
         sys.exit(1)
+
     day_name = args[1]
     dir = os.path.dirname(__file__)
+    solution_filepath = f"{dir}/day{day_name}.py"
+
+    if os.path.exists(solution_filepath):
+        print(f"File already exists at {solution_filepath}")
+        sys.exit(2)
+
     shutil.copyfile(f"{dir}/base.py", f"{dir}/day{day_name}.py")
 
     main_fp = f"{dir}/__main__.py"
