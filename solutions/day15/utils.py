@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Protocol, overload
+from typing import TYPE_CHECKING, Union, overload
 
 if TYPE_CHECKING:
     from .safebound import Point
@@ -14,27 +14,29 @@ def parse_line(line: str) -> tuple[tuple[int, int], tuple[int, int]]:
 
 
 @overload
-def manhattan(p1: "Point" | tuple[int, int], p2: "Point" | tuple[int, int]) -> int:
+def manhattan(
+    p1: Union["Point", tuple[int, int]], p2: Union["Point", tuple[int, int]]
+) -> int:
     ...
 
 
 @overload
 def manhattan(
-    p1: "Point" | tuple[int, int] | tuple[float, float], p2: tuple[float, float]
+    p1: Union["Point", tuple[int, int], tuple[float, float]], p2: tuple[float, float]
 ) -> float:
     ...
 
 
 @overload
 def manhattan(
-    p1: tuple[float, float], p2: "Point" | tuple[int, int] | tuple[float, float]
+    p1: tuple[float, float], p2: Union["Point", tuple[int, int], tuple[float, float]]
 ) -> float:
     ...
 
 
 def manhattan(
-    p1: "Point" | tuple[float, float] | tuple[int, int],
-    p2: "Point" | tuple[float, float] | tuple[int, int],
+    p1: Union["Point", tuple[float, float] | tuple[int, int]],
+    p2: Union["Point", tuple[float, float] | tuple[int, int]],
 ) -> int | float:
     x1: int | float
     y1: int | float
