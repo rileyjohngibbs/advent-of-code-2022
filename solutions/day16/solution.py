@@ -57,7 +57,7 @@ def alpha(inputs: list[str], debug: bool) -> tuple[int, int]:
         if debug:
             new = len(network._dist_cache) - network_distances
             if new > 0:
-                print(f"Calculated {new} distances (total {new + network_distances})")
+                # print(f"Calculated {new} distances (total {new + network_distances})")
                 network_distances += new
     debug and print(f"Tried {count} path steps")
     debug and print(f"Candidates paths was at most {max_paths_length}")
@@ -82,7 +82,7 @@ def alpha(inputs: list[str], debug: bool) -> tuple[int, int]:
     max_paths_length = 0
     while double_paths:
         count += 1
-        debug and (count % 1000 == 0) and print(f"Path step {count}")
+        # debug and (count % 1000 == 0) and print(f"Path step {count}")
         max_paths_length = max(max_paths_length, len(double_paths))
         best_incomplete_double_path: DoublePath = double_paths.pop()
         if best_complete_double_path is not None:
@@ -111,7 +111,7 @@ def alpha(inputs: list[str], debug: bool) -> tuple[int, int]:
         if debug:
             new = len(network._dist_cache) - network_distances
             if new > 0:
-                print(f"Calculated {new} distances (total {new + network_distances})")
+                # print(f"Calculated {new} distances (total {new + network_distances})")
                 network_distances += new
     debug and print(f"Tried {count} path steps")
     debug and print(f"Candidates paths was at most {max_paths_length}")

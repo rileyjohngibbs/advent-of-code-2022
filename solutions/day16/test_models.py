@@ -155,27 +155,30 @@ def test_path_maximum_value(path: Path, maximum_value: int) -> None:
             DoublePath(
                 network=LINEAR_NETWORK,
                 valves_opened={},
-                minute=1,
-                location=(LINEAR_VALVES[0], LINEAR_VALVES[0]),
-                current_travel=(set(), set()),
+                minute=2,
+                location=(LINEAR_VALVES[1], LINEAR_VALVES[1]),
+                current_travel=({LINEAR_VALVES[0]}, {LINEAR_VALVES[0]}),
             ),
             [
                 DoublePath(
                     network=LINEAR_NETWORK,
-                    valves_opened={LINEAR_VALVES[0]: 1},
-                    minute=2,
-                    location=(LINEAR_VALVES[0], LINEAR_VALVES[1]),
-                    current_travel=(set(), {LINEAR_VALVES[0]}),
+                    valves_opened={LINEAR_VALVES[1]: 2},
+                    minute=3,
+                    location=(LINEAR_VALVES[1], LINEAR_VALVES[2]),
+                    current_travel=(set(), {LINEAR_VALVES[0], LINEAR_VALVES[1]}),
                 ),
                 DoublePath(
                     network=LINEAR_NETWORK,
                     valves_opened={},
-                    minute=2,
-                    location=(LINEAR_VALVES[1], LINEAR_VALVES[1]),
-                    current_travel=({LINEAR_VALVES[0]}, {LINEAR_VALVES[0]}),
+                    minute=3,
+                    location=(LINEAR_VALVES[2], LINEAR_VALVES[2]),
+                    current_travel=(
+                        {LINEAR_VALVES[0], LINEAR_VALVES[1]},
+                        {LINEAR_VALVES[0], LINEAR_VALVES[1]},
+                    ),
                 ),
             ],
-            id="first minute, asymmetry",
+            id="same location, asymmetry",
         ),
         pytest.param(
             DoublePath(

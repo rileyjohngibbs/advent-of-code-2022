@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import cached_property
 from itertools import islice
-from typing import TypeVar
+from typing import Iterator, TypeVar
 
 TIME_LIMIT = 30
 
@@ -21,15 +21,20 @@ T_ = TypeVar("T_")
 
 class Network:
     connections: dict[str, tuple[Valve, ...]]
+    valves: dict[str, Valve]
     _dist_cache: dict[tuple[str, str], int]
 
     def __init__(self, valves: dict[str, Valve], connections: list[tuple[str, str]]):
         self.connections = {}
+        self.valves = valves
         for from_, to_ in connections:
             self.connections[valves[from_].name] = self.connections.get(
                 valves[from_].name, ()
             ) + (valves[to_],)
         self._dist_cache = {}
+
+    def __iter__(self) -> Iterator[Valve]:
+        return (v for v in self.valves.values())
 
     def get_connections(self, valve_name: str) -> tuple[Valve, ...]:
         return self.connections[valve_name]
@@ -174,7 +179,12 @@ class Path(BasePath):
                     current_travel={*self.current_travel},
                 )
             ]
-        opener = self.location not in self.valves_opened and [self.open()] or []
+        opener = (
+            self.location not in self.valves_opened
+            and self.location.rate != 0
+            and [self.open()]
+            or []
+        )
         neighbors = (
             valve
             for valve in self.network.get_connections(self.location.name)
@@ -256,6 +266,18 @@ class DoublePath(BasePath):
                     current_travel=self.current_travel,
                 )
             ]
+        if all(
+            valve.rate == 0 or valve in self.valves_opened for valve in self.network
+        ):
+            return [
+                DoublePath(
+                    network=self.network,
+                    valves_opened=self.valves_opened,
+                    minute=self.time_limit + 1,
+                    location=self.location,
+                    current_travel=self.current_travel,
+                )
+            ]
 
         human, elephant = self.location
         human_travel, elephant_travel = self.current_travel
@@ -269,9 +291,13 @@ class DoublePath(BasePath):
             for valve in self.network.get_connections(elephant.name)
             if valve not in elephant_travel
         ]
-        if human not in self.valves_opened:
+        if human not in self.valves_opened and human.rate != 0:
             human_moves.append(None)
-        if elephant not in self.valves_opened and elephant != human:
+        if (
+            elephant not in self.valves_opened
+            and elephant != human
+            and elephant.rate != 0
+        ):
             elephant_moves.append(None)
 
         iterations = [
@@ -280,6 +306,12 @@ class DoublePath(BasePath):
             for ele in elephant_moves
         ]
         return iterations
+
+    def noop_state(self) -> bool:
+        return self.noop_valve(self.location[0]) and self.noop_valve(self.location[1])
+
+    def noop_valve(self, valve: Valve) -> bool:
+        return valve.rate == 0 or valve in self.valves_opened
 
     def act(
         self, *, human_move: Valve | None = None, elephant_move: Valve | None = None
