@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import cached_property
+from itertools import islice
 from typing import TypeVar
 
 TIME_LIMIT = 30
@@ -15,8 +16,78 @@ class Valve:
         return f"<Valve {self.name} ({self.rate})>"
 
 
-Network = dict[Valve, list[Valve]]
 T_ = TypeVar("T_")
+
+
+class Network:
+    connections: dict[str, tuple[Valve, ...]]
+    _dist_cache: dict[tuple[str, str], int]
+
+    def __init__(self, valves: dict[str, Valve], connections: list[tuple[str, str]]):
+        self.connections = {}
+        for from_, to_ in connections:
+            self.connections[valves[from_].name] = self.connections.get(
+                valves[from_].name, ()
+            ) + (valves[to_],)
+        self._dist_cache = {}
+
+    def get_connections(self, valve_name: str) -> tuple[Valve, ...]:
+        return self.connections[valve_name]
+
+    @cached_property
+    def sorted_valves(self) -> tuple[Valve, ...]:
+        all_valves = set(
+            valve for endpoints in self.connections.values() for valve in endpoints
+        )
+        return tuple(sorted(all_valves, key=lambda v: v.rate, reverse=True))
+
+    def distance(self, start: Valve, end: Valve) -> int:
+        key = (start.name, end.name)
+        if key in self._dist_cache:
+            return self._dist_cache[key]
+
+        visited = {start.name}
+        frontier: list[Valve] = list(self.get_connections(start.name))
+        steps = 0
+        best_path: int | None = None
+        while end.name not in visited:
+            if not frontier:
+                if best_path:
+                    steps = best_path
+                    break
+                else:
+                    raise Exception()
+            new_frontier = [
+                conn
+                for valve in frontier
+                for conn in self.get_connections(valve.name)
+                if conn.name not in visited
+            ]
+            visited.update(v.name for v in frontier)
+            steps += 1
+
+            frontier = []
+            pre_calced: int | None = None
+            for valve in new_frontier:
+                valve_key = (valve.name, end.name)
+                if valve_key not in self._dist_cache:
+                    frontier.append(valve)
+                else:
+                    pre_calced = (
+                        min(pre_calced, self._dist_cache[valve_key] + steps + 1)
+                        if pre_calced is not None
+                        else self._dist_cache[valve_key] + steps + 1
+                    )
+
+            if pre_calced is not None:
+                if best_path is None or best_path > pre_calced:
+                    best_path = pre_calced
+            if best_path == steps:
+                break
+
+        self._dist_cache[key] = steps
+        self._dist_cache[(key[1], key[0])] = steps
+        return steps
 
 
 class BasePath(ABC):
@@ -26,6 +97,7 @@ class BasePath(ABC):
     location: tuple[Valve, Valve] | Valve
     current_travel: tuple[set[Valve], set[Valve]] | set[Valve]
     time_limit: int
+    _max_value_cache: int | None = None
 
     def __repr__(self) -> str:
         return (
@@ -49,8 +121,15 @@ class BasePath(ABC):
         return self.minute > self.time_limit
 
     @property
-    @abstractmethod
     def maximum_value(self) -> int:
+        if self._max_value_cache is not None:
+            return self._max_value_cache
+        value = self.calculate_maximum_value()
+        self._max_value_cache = value
+        return value
+
+    @abstractmethod
+    def calculate_maximum_value(self) -> int:
         ...
 
     @abstractmethod
@@ -58,7 +137,7 @@ class BasePath(ABC):
         ...
 
 
-@dataclass(frozen=True)
+@dataclass
 class Path(BasePath):
     network: Network
     valves_opened: dict[Valve, int]
@@ -67,16 +146,20 @@ class Path(BasePath):
     current_travel: set[Valve]
     time_limit: int = TIME_LIMIT
 
-    @cached_property
-    def maximum_value(self) -> int:
-        max_valves_opened = self.time_left // 2
-        best_valves = sorted(
-            [valve for valve in self.network if valve not in self.valves_opened],
-            key=lambda v: v.rate,
-            reverse=True,
-        )[:max_valves_opened]
+    def calculate_maximum_value(self) -> int:
+        initial_move = self.location in self.valves_opened
+        max_valves_opened = (self.time_left - initial_move) // 2
+        best_valves = islice(
+            (
+                valve
+                for valve in self.network.sorted_valves
+                if valve not in self.valves_opened
+                and self.network.distance(self.location, valve) < self.time_left - 1
+            ),
+            max_valves_opened,
+        )
         return self.current_value + sum(
-            (self.time_left - (rank * 2 + 1)) * valve.rate
+            (self.time_left - initial_move - (rank * 2 + 1)) * valve.rate
             for rank, valve in enumerate(best_valves)
         )
 
@@ -94,7 +177,7 @@ class Path(BasePath):
         opener = self.location not in self.valves_opened and [self.open()] or []
         neighbors = (
             valve
-            for valve in self.network[self.location]
+            for valve in self.network.get_connections(self.location.name)
             if valve not in self.current_travel
         )
         return opener + list(map(self.move, neighbors))
@@ -128,7 +211,7 @@ class Path(BasePath):
         )
 
 
-@dataclass(frozen=True)
+@dataclass
 class DoublePath(BasePath):
     network: Network
     valves_opened: dict[Valve, int]
@@ -140,18 +223,27 @@ class DoublePath(BasePath):
     def __repr__(self) -> str:
         return super().__repr__()
 
-    @cached_property
-    def maximum_value(self) -> int:
-        max_valves_opened = self.time_left // 2 * 2
-        best_valves = sorted(
-            [valve for valve in self.network if valve not in self.valves_opened],
-            key=lambda v: v.rate,
-            reverse=True,
-        )[:max_valves_opened]
-        return self.current_value + sum(
-            (self.time_left - (rank // 2 * 2 + 1)) * valve.rate
+    def calculate_maximum_value(self) -> int:
+        initial_move = self.location in self.valves_opened
+        max_valves_opened = (self.time_left - initial_move) // 2 * 2
+        best_valves = islice(
+            (
+                valve
+                for valve in self.network.sorted_valves
+                if valve not in self.valves_opened
+                and (
+                    self.network.distance(self.location[0], valve) < self.time_left - 1
+                    or self.network.distance(self.location[1], valve)
+                    < self.time_left - 1
+                )
+            ),
+            max_valves_opened,
+        )
+        value = self.current_value + sum(
+            (self.time_left - initial_move - (rank // 2 * 2 + 1)) * valve.rate
             for rank, valve in enumerate(best_valves)
         )
+        return value
 
     def next_iterations(self) -> list["DoublePath"]:
         if self.minute == self.time_limit:
@@ -168,10 +260,14 @@ class DoublePath(BasePath):
         human, elephant = self.location
         human_travel, elephant_travel = self.current_travel
         human_moves: list[Valve | None] = [
-            valve for valve in self.network[human] if valve not in human_travel
+            valve
+            for valve in self.network.get_connections(human.name)
+            if valve not in human_travel
         ]
         elephant_moves: list[Valve | None] = [
-            valve for valve in self.network[elephant] if valve not in elephant_travel
+            valve
+            for valve in self.network.get_connections(elephant.name)
+            if valve not in elephant_travel
         ]
         if human not in self.valves_opened:
             human_moves.append(None)

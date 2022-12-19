@@ -2,7 +2,7 @@ import re
 
 from sortedcontainers import SortedList
 
-from .models import DoublePath, Path, Valve
+from .models import DoublePath, Network, Path, Valve
 
 LINE_REGEX = (
     r"Valve (?P<name>\w\w) has flow rate=(?P<rate>\d+); "
@@ -11,17 +11,14 @@ LINE_REGEX = (
 
 
 def alpha(inputs: list[str], debug: bool) -> tuple[int, int]:
-    network: dict[Valve, list[Valve]] = {}
     connections: list[tuple[str, str]] = []
     valves_by_name: dict[str, Valve] = {}
     for line in inputs:
         valve, line_connections = parse_line(line)
         connections.extend((valve.name, conn) for conn in line_connections)
-        network[valve] = []
         valves_by_name[valve.name] = valve
-    for start, end in connections:
-        network[valves_by_name[start]].append(valves_by_name[end])
-    starting_valve = next(v for v in network if v.name == "AA")
+    network = Network(valves_by_name, connections)
+    starting_valve = valves_by_name["AA"]
 
     paths = SortedList(
         [
@@ -38,6 +35,8 @@ def alpha(inputs: list[str], debug: bool) -> tuple[int, int]:
     best_complete_path: Path | None = None
     count = 0
     max_paths_length = 0
+    if debug:
+        network_distances = len(network._dist_cache)
     while paths:
         count += 1
         max_paths_length = max(max_paths_length, len(paths))
@@ -55,10 +54,16 @@ def alpha(inputs: list[str], debug: bool) -> tuple[int, int]:
                     best_complete_path = path
             else:
                 paths.add(path)
+        if debug:
+            new = len(network._dist_cache) - network_distances
+            if new > 0:
+                print(f"Calculated {new} distances (total {new + network_distances})")
+                network_distances += new
     debug and print(f"Tried {count} path steps")
     debug and print(f"Candidates paths was at most {max_paths_length}")
     assert best_complete_path is not None
     part1 = best_complete_path.current_value
+    debug and print("=" * 30)
 
     double_paths = SortedList(
         [
@@ -74,10 +79,11 @@ def alpha(inputs: list[str], debug: bool) -> tuple[int, int]:
     )
     best_complete_double_path: DoublePath | None = None
     count = 0
-    # max_paths_length = 0
+    max_paths_length = 0
     while double_paths:
         count += 1
-        # max_paths_length = max(max_paths_length, len(double_paths))
+        debug and (count % 1000 == 0) and print(f"Path step {count}")
+        max_paths_length = max(max_paths_length, len(double_paths))
         best_incomplete_double_path: DoublePath = double_paths.pop()
         if best_complete_double_path is not None:
             if (
@@ -89,23 +95,30 @@ def alpha(inputs: list[str], debug: bool) -> tuple[int, int]:
         new_double_paths = best_incomplete_double_path.next_iterations()
         for double_path in new_double_paths:
             if double_path.complete:
-                if best_complete_double_path is None:
+                if (
+                    best_complete_double_path is None
+                    or best_complete_double_path.current_value < path.current_value
+                ):
                     best_complete_double_path = double_path
                     debug and print(
                         f"New best: {best_complete_double_path.current_value}"
                     )
-                elif best_complete_double_path.current_value < path.current_value:
-                    best_complete_double_path = double_path
-                    debug and print(
-                        f"New best: {best_complete_double_path.current_value}"
-                    )
-            else:
+            elif (
+                not double_paths
+                or double_paths[-1].current_value <= double_path.maximum_value
+            ):
                 double_paths.add(double_path)
+        if debug:
+            new = len(network._dist_cache) - network_distances
+            if new > 0:
+                print(f"Calculated {new} distances (total {new + network_distances})")
+                network_distances += new
     debug and print(f"Tried {count} path steps")
-    # debug and print(f"Candidates paths was at most {max_paths_length}")
+    debug and print(f"Candidates paths was at most {max_paths_length}")
     assert best_complete_double_path is not None
     # debug and print(best_complete_double_path.valves_opened)
     part2 = best_complete_double_path.current_value
+    debug and print("=" * 30)
 
     return part1, part2
 
