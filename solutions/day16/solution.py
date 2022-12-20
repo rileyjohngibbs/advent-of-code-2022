@@ -82,7 +82,9 @@ def alpha(inputs: list[str], debug: bool) -> tuple[int, int]:
     max_paths_length = 0
     while double_paths:
         count += 1
-        # debug and (count % 1000 == 0) and print(f"Path step {count}")
+        if debug and (count % 1000 == 0):
+            print(f"Path step {count}")
+            print(f"Best maximum: {double_paths[-1].maximum_value}")
         max_paths_length = max(max_paths_length, len(double_paths))
         best_incomplete_double_path: DoublePath = double_paths.pop()
         if best_complete_double_path is not None:

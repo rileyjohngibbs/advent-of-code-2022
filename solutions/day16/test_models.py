@@ -24,6 +24,7 @@ LINEAR_NETWORK, LINEAR_VALVES = build_linear_network()
 
 
 def build_zeros_network() -> tuple[Network, list[Valve]]:
+    """Rate 0 everywhere but indices 5 and 10"""
     valves = [
         Valve(name=chr(65 + n) * 2, rate=(n in (5, 10) and 1 or 0)) for n in range(11)
     ]
@@ -192,9 +193,22 @@ def test_path_maximum_value(path: Path, maximum_value: int) -> None:
                 DoublePath(
                     network=LINEAR_NETWORK,
                     valves_opened={LINEAR_VALVES[0]: 1, LINEAR_VALVES[1]: 2},
-                    minute=3,
-                    location=(LINEAR_VALVES[1], LINEAR_VALVES[1]),
-                    current_travel=({LINEAR_VALVES[0]}, set()),
+                    minute=4,
+                    location=(LINEAR_VALVES[2], LINEAR_VALVES[2]),
+                    current_travel=(
+                        {LINEAR_VALVES[0], LINEAR_VALVES[1]},
+                        {LINEAR_VALVES[1]},
+                    ),
+                ),
+                DoublePath(  # This one sucks; elephant went to deadend
+                    network=LINEAR_NETWORK,
+                    valves_opened={LINEAR_VALVES[0]: 1, LINEAR_VALVES[1]: 2},
+                    minute=4,
+                    location=(LINEAR_VALVES[2], LINEAR_VALVES[0]),
+                    current_travel=(
+                        {LINEAR_VALVES[0], LINEAR_VALVES[1]},
+                        {LINEAR_VALVES[1]},
+                    ),
                 ),
                 DoublePath(
                     network=LINEAR_NETWORK,
@@ -255,6 +269,28 @@ def test_path_maximum_value(path: Path, maximum_value: int) -> None:
                 ),
             ],
             id="both can open",
+        ),
+        pytest.param(
+            DoublePath(
+                network=ZEROS_NETWORK,
+                valves_opened={},
+                minute=1,
+                location=(ZEROS_VALVES[0], ZEROS_VALVES[0]),
+                current_travel=(set(), set()),
+            ),
+            [
+                DoublePath(
+                    network=ZEROS_NETWORK,
+                    valves_opened={},
+                    minute=6,
+                    location=(ZEROS_VALVES[5], ZEROS_VALVES[5]),
+                    current_travel=(
+                        {ZEROS_VALVES[n] for n in range(5)},
+                        {ZEROS_VALVES[n] for n in range(5)},
+                    ),
+                )
+            ],
+            id="go to first opening action",
         ),
     ],
 )

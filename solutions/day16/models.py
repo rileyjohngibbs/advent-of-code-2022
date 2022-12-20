@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import cached_property
-from itertools import islice
+from itertools import islice, product
 from typing import Iterator, TypeVar
 
 TIME_LIMIT = 30
@@ -41,10 +41,7 @@ class Network:
 
     @cached_property
     def sorted_valves(self) -> tuple[Valve, ...]:
-        all_valves = set(
-            valve for endpoints in self.connections.values() for valve in endpoints
-        )
-        return tuple(sorted(all_valves, key=lambda v: v.rate, reverse=True))
+        return tuple(sorted(self.valves.values(), key=lambda v: v.rate, reverse=True))
 
     def distance(self, start: Valve, end: Valve) -> int:
         key = (start.name, end.name)
@@ -281,6 +278,19 @@ class DoublePath(BasePath):
 
         human, elephant = self.location
         human_travel, elephant_travel = self.current_travel
+        if (
+            self.noop_valve(human)
+            and all(
+                neighbor in human_travel
+                for neighbor in self.network.get_connections(human.name)
+            )
+            or self.noop_valve(elephant)
+            and all(
+                neighbor in elephant_travel
+                for neighbor in self.network.get_connections(elephant.name)
+            )
+        ):
+            return []
         human_moves: list[Valve | None] = [
             valve
             for valve in self.network.get_connections(human.name)
@@ -300,11 +310,13 @@ class DoublePath(BasePath):
         ):
             elephant_moves.append(None)
 
-        iterations = [
-            self.act(human_move=hum, elephant_move=ele)
-            for hum in human_moves
-            for ele in elephant_moves
-        ]
+        iterations: list[DoublePath] = []
+        for hum, ele in product(human_moves, elephant_moves):
+            action = self.act(human_move=hum, elephant_move=ele)
+            if action.minute < self.time_limit + 1 and action.noop_state():
+                iterations.extend(action.next_iterations())
+            else:
+                iterations.append(action)
         return iterations
 
     def noop_state(self) -> bool:
