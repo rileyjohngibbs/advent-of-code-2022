@@ -233,24 +233,21 @@ class DoublePath(BasePath):
     def calculate_maximum_value(self) -> int:
         initial_move = self.location in self.valves_opened
         max_valves_opened = (self.time_left - initial_move) // 2 * 2
-        best_valves = islice(
-            (
-                valve
-                for valve in self.network.sorted_valves
-                if valve not in self.valves_opened
-                and (
-                    self.network.distance(self.location[0], valve) < self.time_left - 1
-                    or self.network.distance(self.location[1], valve)
-                    < self.time_left - 1
-                )
-            ),
-            max_valves_opened,
+        best_values = sorted(
+            m
+            for valve in self.network.valves.values()
+            if valve not in self.valves_opened
+            if (m := self.max_from_valve(valve)) >= 0
+        )[-max_valves_opened:]
+        return self.current_value + sum(best_values)
+
+    def max_from_valve(self, valve: Valve) -> int:
+        distance = min(
+            self.network.distance(self.location[0], valve),
+            self.network.distance(self.location[1], valve),
         )
-        value = self.current_value + sum(
-            (self.time_left - initial_move - (rank // 2 * 2 + 1)) * valve.rate
-            for rank, valve in enumerate(best_valves)
-        )
-        return value
+        time_open = self.time_left - distance - 1
+        return time_open * valve.rate
 
     def next_iterations(self) -> list["DoublePath"]:
         if self.minute == self.time_limit:
