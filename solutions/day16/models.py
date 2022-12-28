@@ -101,6 +101,12 @@ class BasePath(ABC):
     time_limit: int
     _max_value_cache: int | None = None
 
+    def __init__(self) -> None:
+        super().__init__()
+        self.valves_opened = {
+            valve: 1 for valve in self.network.valves.values() if valve.rate == 0
+        }
+
     def __repr__(self) -> str:
         return (
             f"<{self.__class__.__name__}: valves_opened={self.valves_opened}, minute={self.minute}, "
@@ -231,15 +237,23 @@ class DoublePath(BasePath):
         return super().__repr__()
 
     def calculate_maximum_value(self) -> int:
-        initial_move = self.location in self.valves_opened
-        max_valves_opened = (self.time_left - initial_move) // 2 * 2
-        best_values = sorted(
-            m
-            for valve in self.network.valves.values()
-            if valve not in self.valves_opened
-            if (m := self.max_from_valve(valve)) >= 0
-        )[-max_valves_opened:]
-        return self.current_value + sum(best_values)
+        on_valve = any(loc not in self.valves_opened for loc in self.location)
+        maximum_opened = (self.time_left + on_valve) // 2 * 2
+        sorted_valves = sorted(
+            (
+                (m, valve)
+                for valve in self.network.valves.values()
+                if valve not in self.valves_opened
+                if (m := self.max_from_valve(valve)) >= 0
+            ),
+            key=lambda sv: sv[0],
+            reverse=True,
+        )[:maximum_opened]
+        least_rate = min(v.rate for _, v in sorted_valves)
+        future_value = sum(
+            m - i // 2 * least_rate for i, (m, _) in enumerate(sorted_valves)
+        )
+        return self.current_value + future_value
 
     def max_from_valve(self, valve: Valve) -> int:
         distance = min(
@@ -342,9 +356,9 @@ class DoublePath(BasePath):
             elephant_location = elephant_move
             elephant_travel = {self.location[1]} | self.current_travel[1]
         valves_opened = (
-            (human_open or elephant_open)
-            and human_open | elephant_open | self.valves_opened
-            or self.valves_opened
+            human_open | elephant_open | self.valves_opened
+            if human_open or elephant_open
+            else self.valves_opened
         )
         return DoublePath(
             network=self.network,
