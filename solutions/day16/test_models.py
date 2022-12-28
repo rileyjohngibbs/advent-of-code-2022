@@ -306,7 +306,7 @@ def test_double_path_next_iterations(
 @pytest.mark.parametrize(
     "path, maximum_value",
     [
-        (
+        pytest.param(
             DoublePath(
                 network=LINEAR_NETWORK,
                 valves_opened={},
@@ -314,9 +314,10 @@ def test_double_path_next_iterations(
                 location=(LINEAR_VALVES[0], LINEAR_VALVES[0]),
                 current_travel=(set(), set()),
             ),
-            0 * 1,  # Cannot reach any non-zero valves
+            0 * 1,
+            id="two minutes left",
         ),
-        (
+        pytest.param(
             DoublePath(
                 network=LINEAR_NETWORK,
                 valves_opened={},
@@ -324,9 +325,10 @@ def test_double_path_next_iterations(
                 location=(LINEAR_VALVES[0], LINEAR_VALVES[0]),
                 current_travel=(set(), set()),
             ),
-            1 * 2,
+            1 * 1,
+            id="three minutes left",
         ),
-        (
+        pytest.param(
             DoublePath(
                 network=LINEAR_NETWORK,
                 valves_opened={},
@@ -334,9 +336,10 @@ def test_double_path_next_iterations(
                 location=(LINEAR_VALVES[0], LINEAR_VALVES[0]),
                 current_travel=(set(), set()),
             ),
-            2 * 3 + 1 * 3,
+            1 * 2 + 2 * 1,
+            id="four minutes left",
         ),
-        (
+        pytest.param(
             DoublePath(
                 network=LINEAR_NETWORK,
                 valves_opened={},
@@ -344,12 +347,107 @@ def test_double_path_next_iterations(
                 location=(LINEAR_VALVES[0], LINEAR_VALVES[0]),
                 current_travel=(set(), set()),
             ),
-            (3 * 4 + 2 * 4) + (1 * 2 + 0 * 2),
+            1 * 3 + 2 * 2,  # 3 * 1, 2 * 2, 1 * 3
+            id="five minutes left",
+        ),
+        pytest.param(
+            DoublePath(
+                network=LINEAR_NETWORK,
+                valves_opened={},
+                minute=25,
+                location=(LINEAR_VALVES[1], LINEAR_VALVES[1]),
+                current_travel=(set(), set()),
+            ),
+            1 * 1,
+            id="two minutes left, on a valve",
+        ),
+        pytest.param(
+            DoublePath(
+                network=LINEAR_NETWORK,
+                valves_opened={},
+                minute=24,
+                location=(LINEAR_VALVES[1], LINEAR_VALVES[1]),
+                current_travel=(set(), set()),
+            ),
+            1 * 2 + 2 * 1,
+            id="three minutes left, on a valve",
+        ),
+        pytest.param(
+            DoublePath(
+                network=LINEAR_NETWORK,
+                valves_opened={},
+                minute=23,
+                location=(LINEAR_VALVES[1], LINEAR_VALVES[1]),
+                current_travel=(set(), set()),
+            ),
+            1 * 3 + 2 * 2,  # 1 * 3, 2 * 2, 3 * 1
+            id="four minutes left, on a valve",
+        ),
+        pytest.param(
+            DoublePath(
+                network=LINEAR_NETWORK,
+                valves_opened={},
+                minute=19,
+                location=(LINEAR_VALVES[1], LINEAR_VALVES[1]),
+                current_travel=(set(), set()),
+            ),
+            4 * 4
+            + 3 * 5
+            + 5 * (3 - 2)
+            + 2 * (6 - 2),  # 1 * 7, 2 * 6, 3 * 5, 4 * 4, 5 * 3, 6 * 2, 7 * 1
+            id="eight minutes left, on a valve",
         ),
     ],
 )
 def test_double_path_maximum_value(path: DoublePath, maximum_value: int) -> None:
     assert path.maximum_value == maximum_value
+
+
+@pytest.mark.parametrize(
+    "path, valve, maximum_value",
+    [
+        pytest.param(
+            DoublePath(
+                LINEAR_NETWORK,
+                {},
+                1,
+                (LINEAR_VALVES[0], LINEAR_VALVES[0]),
+                (set(), set()),
+            ),
+            LINEAR_VALVES[0],
+            0,
+            id="dud valve",
+        ),
+        pytest.param(
+            DoublePath(
+                LINEAR_NETWORK,
+                {},
+                1,
+                (LINEAR_VALVES[1], LINEAR_VALVES[1]),
+                (set(), set()),
+            ),
+            LINEAR_VALVES[1],
+            25,
+            id="on location",
+        ),
+        pytest.param(
+            DoublePath(
+                LINEAR_NETWORK,
+                {},
+                1,
+                (LINEAR_VALVES[0], LINEAR_VALVES[3]),
+                (set(), set()),
+            ),
+            LINEAR_VALVES[1],
+            24,
+            id="different distances",
+        ),
+    ],
+)
+def test_double_path_max_from_valve(
+    path: DoublePath, valve: Valve, maximum_value: int
+) -> None:
+    assert path.max_from_valve(valve) == maximum_value
 
 
 def test_caching_distance() -> None:
