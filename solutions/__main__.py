@@ -78,10 +78,12 @@ class UnsolvedError(NotImplementedError):
 @contextmanager
 def timeit(print_time: bool) -> Iterator[None]:
     start = time.time()
-    yield
-    end = time.time()
-    if print_time:
-        print(end - start)
+    try:
+        yield
+    finally:
+        end = time.time()
+        if print_time:
+            print(f"Total runtime: {end - start}")
 
 
 if __name__ == "__main__":
