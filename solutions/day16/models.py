@@ -1,10 +1,32 @@
+import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from functools import cached_property
 from itertools import islice, product
-from typing import Iterator, TypeVar
+from typing import Callable, Iterator, TypeVar
 
 TIME_LIMIT = 30
+TIMERS: dict[str, float] = {}
+CURRENTLY_TIMED: set[str] = set()
+
+C = TypeVar("C", bound=Callable)
+
+
+def classtimer(func: C) -> C:
+    def wrapper(self, *args, **kwargs):
+        key = f"{self.__class__.__name__}.{func.__name__}"
+        if key not in CURRENTLY_TIMED:
+            CURRENTLY_TIMED.add(key)
+            start = time.time()
+            value = func(self, *args, **kwargs)
+            stop = time.time()
+            TIMERS[key] = TIMERS.get(key, 0) + stop - start
+            CURRENTLY_TIMED.remove(key)
+        else:
+            value = func(self, *args, **kwargs)
+        return value
+
+    return wrapper  # type: ignore
 
 
 @dataclass(frozen=True)
@@ -43,6 +65,7 @@ class Network:
     def sorted_valves(self) -> tuple[Valve, ...]:
         return tuple(sorted(self.valves.values(), key=lambda v: v.rate, reverse=True))
 
+    @classtimer
     def distance(self, start: Valve, end: Valve) -> int:
         key = (start.name, end.name)
         if key in self._dist_cache:
@@ -236,6 +259,7 @@ class DoublePath(BasePath):
     def __repr__(self) -> str:
         return super().__repr__()
 
+    @classtimer
     def calculate_maximum_value(self) -> int:
         on_valve = any(loc not in self.valves_opened for loc in self.location)
         maximum_opened = (self.time_left + on_valve) // 2 * 2
@@ -263,6 +287,7 @@ class DoublePath(BasePath):
         time_open = self.time_left - distance - 1
         return time_open * valve.rate
 
+    @classtimer
     def next_iterations(self) -> list["DoublePath"]:
         if self.minute == self.time_limit:
             return [
@@ -336,6 +361,7 @@ class DoublePath(BasePath):
     def noop_valve(self, valve: Valve) -> bool:
         return valve.rate == 0 or valve in self.valves_opened
 
+    @classtimer
     def act(
         self, *, human_move: Valve | None = None, elephant_move: Valve | None = None
     ) -> "DoublePath":
