@@ -67,6 +67,15 @@ def main(*args: str):
     with open(main_fp, "w") as m:
         m.writelines(main_contents)
 
+    print("Run solution:")
+    print(f"    python -m solutions {day_name} <input_file>")
+    print(
+        f"Place example input in inputs/test{day_name}.txt and set the value "
+        f"of EXAMPLE_SOLUTIONS in solutions/day{day_name}/tests.py"
+    )
+    print("Test solution on example input:")
+    print(f"    python -m pytest solutions/day{day_name}")
+
 
 if __name__ == "__main__":
     main(*sys.argv)
