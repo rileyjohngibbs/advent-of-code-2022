@@ -10,13 +10,24 @@ def main(*args: str):
 
     day_name = args[1]
     dir = os.path.dirname(__file__)
-    solution_filepath = f"{dir}/day{day_name}.py"
-
-    if os.path.exists(solution_filepath):
-        print(f"File already exists at {solution_filepath}")
+    solution_package = f"{dir}/day{day_name}"
+    if os.path.exists(solution_package):
+        print(f"Directory already exists at {solution_package}")
         sys.exit(2)
+    os.mkdir(solution_package)
 
-    shutil.copyfile(f"{dir}/base.py", f"{dir}/day{day_name}.py")
+    init_filepath = f"{solution_package}/__init__.py"
+    with open(init_filepath, "w") as init_file:
+        init_file.write("from .solution import alpha")
+
+    solution_filepath = f"{solution_package}/solution.py"
+    shutil.copyfile(f"{dir}/base.py", solution_filepath)
+
+    test_filepath = f"{solution_package}/tests.py"
+    with open(f"{dir}/base_test.py") as btf:
+        test_file_contents = btf.read().replace("DAYNO", day_name)
+    with open(test_filepath, "w") as tf:
+        tf.write(test_file_contents)
 
     main_fp = f"{dir}/__main__.py"
     with open(main_fp) as m:
