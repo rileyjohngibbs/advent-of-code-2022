@@ -23,8 +23,8 @@ def main(*args: str):
     solution_filepath = f"{solution_package}/solution.py"
     shutil.copyfile(f"{dir}/base.py", solution_filepath)
 
-    test_filepath = f"{solution_package}/tests.py"
-    with open(f"{dir}/base_test.py") as btf:
+    test_filepath = f"{solution_package}/test_solution.py"
+    with open(f"{dir}/base_test.py.txt") as btf:
         test_file_contents = btf.read().replace("DAYNO", day_name)
     with open(test_filepath, "w") as tf:
         tf.write(test_file_contents)
