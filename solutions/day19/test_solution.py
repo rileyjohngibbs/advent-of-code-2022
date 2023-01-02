@@ -7,7 +7,7 @@ from .models import Blueprint, FactoryState, Resource, ResourceSet
 from .solution import alpha, build_initial_state, parse_blueprint
 
 TEST_INPUT_PATH = "inputs/test19.txt"
-EXAMPLE_SOLUTIONS = (33, 0)
+EXAMPLE_SOLUTIONS = (33, 56 * 62)
 
 
 @pytest.fixture

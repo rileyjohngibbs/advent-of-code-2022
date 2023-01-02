@@ -10,40 +10,25 @@ BLUEPRINT_PATTERN = (
     r"Each obsidian robot costs (\d+) ore and (\d+) clay. "
     r"Each geode robot costs (\d+) ore and (\d+) obsidian."
 )
-TIME_LIMIT = 24
+PART_ONE_TIME_LIMIT = 24
+PART_TWO_TIME_LIMIT = 32
 
 
 def alpha(inputs: list[str], debug: bool = False) -> tuple[int, int]:
     initial_factory_states = list(map(build_initial_state, inputs))
+
     quality = 0
     for initial_state in initial_factory_states:
-        frontier = SortedList([(initial_state, TIME_LIMIT)], key=sort_key)
-        best_state: FactoryState | None = None
-        ticker = 0
-        while len(frontier) > 0:
-            candidate_time: tuple[FactoryState, int] = frontier.pop()
-            candidate, time_left = candidate_time
-            if time_left <= 0:
-                if (
-                    best_state is None
-                    or best_state.resources.geode < candidate.resources.geode
-                ):
-                    best_state = candidate
-            else:
-                if (
-                    best_state is not None
-                    and best_state.resources.geode >= candidate.heuristic(time_left)
-                ):
-                    break
-                frontier.update(candidate.branch(time_left))
-            ticker += 1
-            debug and ticker % 1000 == 0 and print(
-                ticker, len(frontier), best_state and best_state.resources
-            )
-        assert best_state is not None
-        quality += best_state.blueprint.number * best_state.resources.geode
+        max_geodes = maximize_geodes(initial_state, PART_ONE_TIME_LIMIT, debug)
+        quality += initial_state.blueprint.number * max_geodes
     part1 = quality
-    part2 = 0
+
+    product = 1
+    for initial_state in initial_factory_states[:3]:
+        max_geodes = maximize_geodes(initial_state, PART_TWO_TIME_LIMIT, debug)
+        product *= max_geodes
+    part2 = product
+
     return part1, part2
 
 
@@ -64,6 +49,34 @@ def parse_blueprint(input_line: str) -> Blueprint:
         ResourceSet(ore=values[5], obsidian=values[6]),
     )
     return blueprint
+
+
+def maximize_geodes(initial_state: FactoryState, time_limit: int, debug: bool) -> int:
+    frontier = SortedList([(initial_state, time_limit)], key=sort_key)
+    best_state: FactoryState | None = None
+    ticker = 0
+    while len(frontier) > 0:
+        candidate_time: tuple[FactoryState, int] = frontier.pop()
+        candidate, time_left = candidate_time
+        if time_left <= 0:
+            if (
+                best_state is None
+                or best_state.resources.geode < candidate.resources.geode
+            ):
+                best_state = candidate
+        else:
+            if (
+                best_state is not None
+                and best_state.resources.geode >= candidate.heuristic(time_left)
+            ):
+                break
+            frontier.update(candidate.branch(time_left))
+        ticker += 1
+        debug and ticker % 1000 == 0 and print(
+            ticker, len(frontier), best_state and best_state.resources
+        )
+    assert best_state is not None
+    return best_state.resources.geode
 
 
 def sort_key(state_time: tuple[FactoryState, int]) -> int:
