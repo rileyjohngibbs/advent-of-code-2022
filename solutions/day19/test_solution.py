@@ -28,18 +28,6 @@ def test_example(example: list[str]) -> None:
     assert alpha(example) == EXAMPLE_SOLUTIONS
 
 
-# @pytest.mark.parametrize(
-#     "minutes, resources",
-#     [
-#         (3, ResourceSet(ore=1)),
-#         (24, ResourceSet(6, 41, 8, 9)),
-#         (5, ResourceSet(1, 2)),
-#         (18, ResourceSet(2, 17, 3)),
-#         (19, ResourceSet(3, 21, 5, 1)),
-#         (20, ResourceSet(4, 25, 7, 2)),
-#         (21, ResourceSet(3, 29, 2, 3)),
-#     ],
-# )
 def test_example_blueprint_1(example: list[str]) -> None:
     state = build_initial_state(example[0])
     builds: list[tuple[int, Resource | None]] = [
@@ -65,16 +53,16 @@ def test_branch(example_blueprint_1: Blueprint) -> None:
     state = FactoryState(example_blueprint_1, ResourceSet(), ResourceSet(1))
     assert state.branch(24) == {
         (
-            FactoryState(
-                example_blueprint_1, ResourceSet(), ResourceSet(1), ResourceSet(0, 1)
-            ),
-            22,
+            FactoryState(example_blueprint_1, ResourceSet(1), ResourceSet(1, 1)),
+            21,
         ),
         (
-            FactoryState(
-                example_blueprint_1, ResourceSet(), ResourceSet(1), ResourceSet(1)
-            ),
-            20,
+            FactoryState(example_blueprint_1, ResourceSet(1), ResourceSet(2)),
+            19,
+        ),
+        (
+            FactoryState(example_blueprint_1, ResourceSet(24), ResourceSet(1)),
+            0,
         ),
     }
 
