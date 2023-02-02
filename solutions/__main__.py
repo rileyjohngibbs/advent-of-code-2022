@@ -25,6 +25,7 @@ from solutions import (
     day19,
     day20,
     day21,
+    day22,
 )
 from solutions.parsing import ArgsModel, build_parser
 
@@ -50,6 +51,7 @@ solution_functions: dict[int, list[Callable[[list[str], bool], Any]]] = {
     19: [day19.alpha],
     20: [day20.alpha],
     21: [day21.alpha],
+    22: [day22.alpha],
 }
 
 
