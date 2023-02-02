@@ -4,15 +4,15 @@ import (
 	"strconv"
 )
 
-func Solution(input []string) (int, int) {
-	return partOne(input), partTwo(input)
+func Solve(inputLines []string) (int, int) {
+	return partOne(inputLines), partTwo(inputLines)
 }
 
-func partOne(input []string) int {
+func partOne(inputLines []string) int {
 	maxCalories := 0
 	currentCalories := 0
 
-	for _, line := range input {
+	for _, line := range inputLines {
 		if line == "" {
 			if currentCalories > maxCalories {
 				maxCalories = currentCalories
@@ -27,11 +27,11 @@ func partOne(input []string) int {
 	return maxCalories
 }
 
-func partTwo(input []string) int {
+func partTwo(inputLines []string) int {
 	maxCaloriesArray := [3]int{0, 0, 0}
 	currentCalories := 0
 
-	for _, line := range input {
+	for _, line := range inputLines {
 		if line == "" {
 			for i, cal := range maxCaloriesArray {
 				if currentCalories > cal {
