@@ -4,6 +4,7 @@ import (
 	"adventOfCode2023/day01"
 	"adventOfCode2023/day02"
 	"adventOfCode2023/day03"
+	"adventOfCode2023/day08"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -38,6 +39,8 @@ func main() {
 		fmt.Println(day02.Solve(inputLines))
 	case 3:
 		fmt.Println(day03.Solve(inputLines))
+	case 8:
+		fmt.Println(day08.Solve(inputLines))
 	default:
 		fmt.Println("day not implemented yet")
 	}
