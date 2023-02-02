@@ -3,6 +3,7 @@ package main
 import (
 	"adventOfCode2023/day01"
 	"adventOfCode2023/day02"
+	"adventOfCode2023/day03"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -26,13 +27,17 @@ func main() {
 		log.Fatal(err)
 	}
 	inputLines := strings.Split(string(contents), "\n")
-	inputLines = inputLines[:len(inputLines)-1]
+	if inputLines[len(inputLines)-1] == "" {
+		inputLines = inputLines[:len(inputLines)-1]
+	}
 
 	switch day {
 	case 1:
 		fmt.Println(day01.Solve(inputLines))
 	case 2:
 		fmt.Println(day02.Solve(inputLines))
+	case 3:
+		fmt.Println(day03.Solve(inputLines))
 	default:
 		fmt.Println("day not implemented yet")
 	}
